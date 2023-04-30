@@ -1,5 +1,6 @@
 package io.github.takusan23.material3tonalelevationcalc
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -27,11 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import io.github.takusan23.material3tonalelevationcalc.ui.theme.Material3TonalElevationCalcTheme
 
 class MainActivity : ComponentActivity() {
@@ -47,6 +51,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
+    val context = LocalContext.current
     val inputColor = remember { mutableStateOf("#000000") }
     val tonalElevation = remember { mutableStateOf("1") }
     val outputColorString = remember { mutableStateOf(inputColor.value) }
@@ -58,7 +63,7 @@ fun MainScreen() {
             Color(android.graphics.Color.parseColor(inputColor.value))
         }.getOrNull()
         outputColor.value = colorScheme.copy(surface = parseColor ?: colorScheme.surface)
-            .surfaceColorAtElevation((tonalElevation.value.toIntOrNull() ?: 1).dp)
+            .surfaceColorAtElevation((tonalElevation.value.toIntOrNull() ?: 0).dp)
         outputColorString.value = outputColor.value
             .toArgb()
             .let { "#%X".format(it) }
@@ -67,8 +72,8 @@ fun MainScreen() {
     Material3TonalElevationCalcTheme {
         Scaffold(
             topBar = { TopAppBar(title = { Text(text = "TonalElevationを計算する") }) }
-        ) {
-            Column(modifier = Modifier.padding(it)) {
+        ) { paddingValues ->
+            Column(modifier = Modifier.padding(paddingValues)) {
 
 
                 Box(
@@ -86,6 +91,18 @@ fun MainScreen() {
                     text = outputColorString.value,
                     fontSize = 30.sp,
                 )
+
+                OutlinedButton(
+                    modifier = Modifier.align(alignment = Alignment.CenterHorizontally),
+                    onClick = {
+                        val shareIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, outputColorString.value)
+                            type = "text/plain"
+                        }.let { Intent.createChooser(it, null) }
+                        context.startActivity(shareIntent)
+                    }
+                ) { Text(text = "共有") }
 
                 OutlinedTextField(
                     modifier = Modifier
